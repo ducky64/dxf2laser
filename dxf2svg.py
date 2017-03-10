@@ -128,10 +128,17 @@ def handleEntity(svgFile, e):
 
 def saveToSVG(svgFile, dxfData):
 
-  minX = min(dxfData.header['$EXTMIN'][0], dxfData.header['$LIMMIN'][0])
-  minY = min(dxfData.header['$EXTMIN'][1], dxfData.header['$LIMMIN'][1])
-  maxX = max(dxfData.header['$EXTMAX'][0], dxfData.header['$LIMMAX'][0])
-  maxY = max(dxfData.header['$EXTMAX'][1], dxfData.header['$LIMMAX'][1])
+  if '$LIMMIN' in dxfData.header and '$LIMMAX' in dxfData.header:
+    minX = min(dxfData.header['$EXTMIN'][0], dxfData.header['$LIMMIN'][0])
+    minY = min(dxfData.header['$EXTMIN'][1], dxfData.header['$LIMMIN'][1])
+    maxX = max(dxfData.header['$EXTMAX'][0], dxfData.header['$LIMMAX'][0])
+    maxY = max(dxfData.header['$EXTMAX'][1], dxfData.header['$LIMMAX'][1])
+  else:
+    minX = dxfData.header['$EXTMIN'][0]
+    minY = dxfData.header['$EXTMIN'][1]
+    maxX = dxfData.header['$EXTMAX'][0]
+    maxY = dxfData.header['$EXTMAX'][1]
+
   
   # TODO: also handle groups
   svgFile.write(SVG_PREAMBLE.format(
@@ -157,14 +164,18 @@ if __name__ == '__main__':
     # grab data from file
     dxfData = dxfgrabber.readfile(filename)
 
-    # TODO: alret if the file already exist
     # convert and save to svg
-    svgName = '.'.join(filename.split('.')[:-1] + ['svg'])
+    svgName = '.'.join([os.path.splitext(filename)[0]] + ['svg'])
+    if os.path.exists(svgName):
+      if not raw_input("Overwrite existing file? (y/N) ").lower() == 'y':
+        quit("Quitting.")
+
     svgFile = open(svgName, 'w')
 
     label_basename = os.path.basename(filename).split('_')[0]
     print("Opening '%s' (%s)" % (filename, label_basename))
 
+    print "Saving to SVG file: {0}".format(svgName)
     saveToSVG(svgFile, dxfData)
 
     svgFile.close()
